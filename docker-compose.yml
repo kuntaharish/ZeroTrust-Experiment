@@ -1,86 +1,124 @@
 services:
-  svc_a:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
-    environment:
-      - SERVICE_ID=service-a
-    ports:
-      - "7001:5000"
+  # -----------------------
+  # 12 microservices
+  # Host management ports: 7001..7012 -> container 5000
+  # -----------------------
+  service-a:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-a ]
+    ports: [ "7001:5000" ]
 
-  svc_b:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
-    environment:
-      - SERVICE_ID=service-b
-    ports:
-      - "7002:5000"
+  service-b:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-b ]
+    ports: [ "7002:5000" ]
 
-  svc_c:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
-    environment:
-      - SERVICE_ID=service-c
-    ports:
-      - "7003:5000"
+  service-c:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-c ]
+    ports: [ "7003:5000" ]
 
-  svc_d:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
-    environment:
-      - SERVICE_ID=service-d
-    ports:
-      - "7004:5000"
+  service-d:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-d ]
+    ports: [ "7004:5000" ]
 
+  service-e:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-e ]
+    ports: [ "7005:5000" ]
+
+  service-f:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-f ]
+    ports: [ "7006:5000" ]
+
+  service-g:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-g ]
+    ports: [ "7007:5000" ]
+
+  service-h:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-h ]
+    ports: [ "7008:5000" ]
+
+  service-i:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-i ]
+    ports: [ "7009:5000" ]
+
+  service-j:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-j ]
+    ports: [ "7010:5000" ]
+
+  service-k:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-k ]
+    ports: [ "7011:5000" ]
+
+  service-l:
+    build: { context: ./app }
+    environment: [ SERVICE_NAME=service-l ]
+    ports: [ "7012:5000" ]
+
+  # -----------------------
+  # Gateways
+  # -----------------------
   legacy_gateway:
     image: nginx:1.27-alpine
-    depends_on:
-      - svc_a
-      - svc_b
-      - svc_c
-      - svc_d
-    ports:
-      - "5000:80"
+    ports: [ "5000:80" ]
     volumes:
-      - ./nginx/http_gateway.conf:/etc/nginx/conf.d/default.conf:ro
-
-  proxy_gateway:
-    image: nginx:1.27-alpine
+      - ./nginx/legacy_gateway.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - svc_a
-      - svc_b
-      - svc_c
-      - svc_d
-    ports:
-      - "6200:80"
+      - service-a
+      - service-b
+      - service-c
+      - service-d
+      - service-e
+      - service-f
+      - service-g
+      - service-h
+      - service-i
+      - service-j
+      - service-k
+      - service-l
+
+  http_proxy_gateway:
+    image: nginx:1.27-alpine
+    ports: [ "6200:80" ]
     volumes:
-      - ./nginx/http_gateway.conf:/etc/nginx/conf.d/default.conf:ro
-
-  tls_gateway:
-    image: nginx:1.27-alpine
+      - ./nginx/http_proxy_gateway.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - svc_a
-      - svc_b
-      - svc_c
-      - svc_d
-    ports:
-      - "6100:443"
+      - service-a
+
+  tls_only_gateway:
+    image: nginx:1.27-alpine
+    ports: [ "6100:443" ]
     volumes:
       - ./nginx/tls_only_gateway.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./certs:/certs:ro
-
-  mtls_gateway:
-    image: nginx:1.27-alpine
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
-      - svc_a
-      - svc_b
-      - svc_c
-      - svc_d
-    ports:
-      - "6000:443"
+      - service-a
+
+  # ✅ THIS is what you're missing right now
+  mtls_allowed_gateway:
+    image: nginx:1.27-alpine
+    ports: [ "6000:443" ]
     volumes:
-      - ./nginx/mtls_gateway.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./certs:/certs:ro
+      - ./nginx/mtls_allowed_gateway.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - service-a
+      - service-b
+      - service-c
+      - service-d
+      - service-e
+      - service-f
+      - service-g
+      - service-h
+      - service-i
+      - service-j
+      - service-k
+      - service-l
